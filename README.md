@@ -144,7 +144,7 @@ The test uses four independent write clocks and a shared read clock, with a dedi
 - **Randomized traffic:** Exercises all channels simultaneously with varying source activity and downstream backpressure.
 - **Reset synchronization and recovery:** Verifies reset release across all clock domains, discards buffered transactions during global reset, and checks correct operation after restart.
 
-**Result: PASS — 2,109 accepted writes, 2,076 output transfers, and 497 stalled output cycles.**
+**Result: PASS - 2,109 accepted writes, 2,076 output transfers, and 497 stalled output cycles.**
 
 ## ASIC Synthesis & Static Timing Analysis
 
