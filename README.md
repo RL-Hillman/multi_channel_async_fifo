@@ -58,28 +58,45 @@ Each synchronizer supports asynchronous reset assertion and clock-synchronized d
 | [`stream_regslice.sv`](rtl/stream_regslice.sv) | Registered, one-entry elastic Ready/Valid output stage |
 | [`multi_channel_top.sv`](rtl/multi_channel_top.sv) | Parameterized integration of FIFOs, arbitration, data selection, and reset handling |
 
-### Asynchronous FIFO: Clock-Domain Crossing
 
-![Asynchronous FIFO CDC architecture](docs/async_fifo_cdc_architecture.jpeg)
+### Asynchronous FIFO: CDC and Pointer Logic
 
-Each FIFO uses separate **binary pointers** for memory addressing and **Gray-coded pointers** for CDC. Only the Gray-coded pointer values are sent across the clock boundary, through two-flop synchronizers marked with `(* async_reg = "true" *)`.
+The asynchronous FIFO uses independent write and read pointers to track data occupancy across two clock domains. Each pointer is maintained in both **binary and Gray-code representations**: binary pointers address the FIFO memory, while Gray-coded pointers are used for clock-domain crossing.
 
-- **Write → read:** the synchronized write Gray pointer (`wgray_rd_sync2`) is compared with the local next read Gray pointer to determine EMPTY.
-- **Read → write:** the synchronized read Gray pointer (`rgray_wr_sync2`) is compared with the local next write Gray pointer, using `FULL_MASK`, to determine FULL.
-- **Memory access:** write data is stored on an accepted write handshake; the current read address exposes the FIFO head in a first-word-fall-through (FWFT) style when `rd_valid_o` is asserted.
+The following diagram illustrates the pointer synchronization paths and the local FULL/EMPTY detection logic.
 
-The pointer logic implements:
+![Asynchronous FIFO CDC Architecture](docs/async_fifo_cdc_architecture.jpeg)
+
+*Figure 2: Asynchronous FIFO architecture showing binary/Gray pointers, bidirectional CDC synchronization, and FULL/EMPTY detection.*
+
+### Pointer Synchronization and Status Detection
+
+Gray coding ensures that only one pointer bit changes between consecutive increments, reducing the risk of sampling inconsistent multi-bit values during clock-domain crossing.
+
+Each Gray-coded pointer passes through a **two-flop synchronizer** in the receiving clock domain, with the registers marked `(* async_reg = "true" *)`.
+
+The FIFO determines its status using the synchronized remote pointers:
+
+- **FULL detection (write domain):** Compares the next write Gray pointer against the synchronized read Gray pointer, with its two most significant bits inverted. In Gray code, this inversion indicates that the write pointer is exactly one full FIFO cycle ahead of the read pointer, meaning the buffer is full.
+- **EMPTY detection (read domain):** Compares the next read Gray pointer against the synchronized write Gray pointer.
 
 ```systemverilog
 wr_full_next  = (wgray_next == (rgray_wr_sync2 ^ FULL_MASK));
 rd_empty_next = (rgray_next == wgray_rd_sync2);
 ```
+The FIFO uses **synchronous writes** and an **asynchronous read path (FWFT)**, allowing the current FIFO head to be presented without an additional read-clock cycle when data is available.
 
-Each pointer has an additional wrap bit for FULL/EMPTY distinction. Data moves through the FIFO storage; the **synchronized Gray pointers carry occupancy information**, not the data payload.
+### Round-Robin Arbitration
 
-### Arbitration and Output Flow Control
+The arbiter maintains a rotating priority pointer to determine which requesting channel receives the next grant.
 
-The round-robin arbiter examines `fifo_rd_valid` and generates a one-hot grant. On a successful handshake it advances priority to the next channel; under backpressure, the selected request remains the priority starting point. The output register slice accepts the packed `{grant, mux_data}` payload and exposes `{out_grant_o, out_data_o}`, keeping the channel association aligned through stalls.
+Its behavior depends on whether the output register slice can accept data:
+
+- **Successful transfer:** The priority pointer advances to the channel following the selected one.
+- **Backpressure:** The current grant is held until the register slice accepts the selected word.
+- **No active requests:** No grant is issued, and the priority pointer remains unchanged.
+
+This approach prevents a continuously requesting channel from receiving permanent priority over other active channels, while maintaining a stable selection during stalls.
 
 ## Functional Verification
 
