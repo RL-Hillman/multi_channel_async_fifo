@@ -1,31 +1,12 @@
 # Multi-Channel Asynchronous FIFO with Round-Robin Arbitration
 
-A parameterized SystemVerilog RTL design that merges multiple independent input clock domains into a single output stream. Each input channel uses an asynchronous FIFO for clock-domain crossing (CDC), while a round-robin arbiter fairly selects the next available channel. 
-An elastic output register slice introduces a registered pipeline stage to improve timing, while providing Ready/Valid backpressure support. It holds the selected data and its one-hot channel identifier stable until the downstream interface accepts the transfer.
+## Project Overview
 
-The design incorporates **per-clock-domain reset synchronization**, supporting asynchronous active-low reset assertion and synchronous deassertion for reliable reset release across independent clock domains.
+A **parameterized SystemVerilog RTL design** that aggregates data from multiple independent input clock domains into a single output stream. The architecture supports a configurable number of input channels, data width, and FIFO depth, with each channel operating on its own write clock and sharing a common read clock.
 
-The project covers **RTL architecture, CDC design, reset synchronization, self-checking functional verification, standard-cell synthesis, and pre-layout static timing analysis (STA)**.
+Each channel uses an **asynchronous FIFO with Gray-coded pointers and two-stage synchronizers** for safe clock-domain crossing (CDC), along with FULL/EMPTY detection and Ready/Valid flow control. A **round-robin arbiter** provides fair channel selection, while an **elastic output register slice** introduces a registered pipeline stage to improve timing and handle downstream backpressure. The selected data and its one-hot channel identifier remain stable until the transfer is accepted. The design also incorporates **per-clock-domain reset synchronization**, with asynchronous active-low assertion and synchronous deassertion.
 
-## Key Features
-
-- **Scalable Multi-Channel Architecture:** Supports a configurable number of input channels, each operating in its own independent clock domain, with a shared output clock domain.
-- **Parameterized buffering:** configurable data width and per-channel FIFO depth.
-- **FIFO flow control:** FULL/EMPTY detection and Ready/Valid handshakes at both interfaces.
-- **Gray-coded CDC:** two-flop synchronization of Gray-coded read/write pointers in opposite directions.
-- **Round-robin arbitration:** fair selection among channels with available data; advances priority on accepted transfers.
-- **Backpressure-safe output:** an elastic, one-entry register slice holds valid data and channel identification until accepted.
-- **Per-domain reset handling:** independent reset synchronizers for each write domain and the shared read domain.
-
-### Configurable Parameters
-
-| Parameter | Default | Description |
-|---|---:|---|
-| `NUM_CHANNELS` | `4` | Number of independent input channels |
-| `DATA_WIDTH` | `32` | Data width, in bits, of each channel |
-| `FIFO_DEPTH` | `16` | Entries per asynchronous FIFO; must be a power of two and at least 2 |
-
-The architecture is **not limited to four channels**. Diagrams, test results, and ASIC measurements shown below use the **default four-channel configuration** unless stated otherwise.
+The project demonstrates **RTL architecture, CDC design, reset synchronization, self-checking functional verification, standard-cell synthesis, and pre-layout static timing analysis (STA)**.
 
 ## System Architecture
 
