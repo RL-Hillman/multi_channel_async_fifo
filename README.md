@@ -201,20 +201,28 @@ From the repository root:
 ```bash
 bash scripts/run_all_tbs.sh
 ```
-
-The script compiles all three testbenches and runs the asynchronous FIFO test in clock modes 0, 1, and 2. Generated build artifacts are placed in `obj_dir/` and ignored by Git.
+The script compiles all three testbenches and runs the asynchronous FIFO test in clock modes 0, 1, and 2. 
 
 ### ASIC Synthesis and Timing
 
 **Requirements:** compatible Yosys with `read_slang` support, OpenROAD, Python 3, and the Nangate45 Liberty/LEF technology files.
 
+Run the complete ASIC analysis flow:
+
 ```bash
 bash scripts/run_asic_checks.sh
 ```
 
-The ASIC script currently expects an **OpenROAD-flow-scripts** installation beneath `$HOME/eda/OpenROAD-flow-scripts/`. If your environment differs, update the `YOSYS`, `OPENROAD`, and `LIB` paths near the beginning of [`run_asic_checks.sh`](scripts/run_asic_checks.sh). The script generates the netlist and reports locally; these outputs are intentionally excluded from Git.
+The script automatically performs the following steps:
 
-The functional and ASIC scripts were both successfully run from a clean export containing only the tracked project files, using the configured local toolchain.
+1. **RTL Synthesis:** Synthesizes the SystemVerilog design using Yosys and maps it to Nangate45 standard cells.
+2. **Cell Utilization:** Reports the mapped cell count, flip-flop and multiplexer utilization, and total cell area.
+3. **Static Timing Analysis:** Runs OpenROAD pre-layout STA on the synthesized netlist under three clock configurations.
+4. **Timing Verification:** Evaluates Setup, Hold, Recovery, and Removal slack, reporting PASS/FAIL for each scenario.
+
+The generated gate-level netlist is saved in `netlist/`, while synthesis and timing reports are saved in `reports/`.
+
+**Environment setup:** The script uses a local OpenROAD-flow-scripts installation. Tool and library paths may need to be adjusted in [`run_asic_checks.sh`](scripts/run_asic_checks.sh) to match your environment.
 
 ## Repository Structure
 
