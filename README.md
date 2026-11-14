@@ -9,42 +9,44 @@ Each channel uses an **asynchronous FIFO with Gray-coded pointers and two-stage 
 The project demonstrates **RTL architecture, CDC design, reset synchronization, self-checking functional verification, standard-cell synthesis, and pre-layout static timing analysis (STA)**.
 
 
+
 ## System Architecture
 
-The system is organized into multiple independent write-clock domains and a single shared read-clock domain. Each input channel operates independently, while the read-domain logic manages channel arbitration, data selection, and output flow control.
+The system consists of multiple independent write-clock domains connected to a shared read-clock domain. Each input channel operates independently, while the read-domain logic handles arbitration, data selection, and output flow control.
 
-The diagram below illustrates the default four-channel configuration (`NUM_CHANNELS = 4`). The architecture scales according to the configured number of channels.
+The diagram below illustrates the default **four-channel configuration** (`NUM_CHANNELS = 4`). The architecture supports a configurable number of channels.
 
 ![System Architecture](docs/system_architecture.jpeg)
 
-*Figure 1: Top-level system architecture showing asynchronous FIFOs, round-robin arbitration, data multiplexing, output register slicing, and reset synchronization.*
+*Figure 1: System architecture showing independent input channels, asynchronous FIFOs, round-robin arbitration, data multiplexing, output register slicing, and reset synchronization.*
 
 ### Data Flow and Arbitration
 
-Each input channel uses its own `wr_clk_i[ch]` and Ready/Valid interface. Incoming data is buffered in a dedicated asynchronous FIFO, enabling safe transfer into the shared `rd_clk` domain.
+Each input channel receives data through its own Ready/Valid interface and stores it in a dedicated asynchronous FIFO. The FIFOs safely transfer data into the shared `rd_clk` domain, where the round-robin arbiter selects among channels containing valid data.
 
-The round-robin arbiter monitors the FIFO valid signals and selects an available channel. A one-hot `grant` vector controls the data MUX, which forwards the selected FIFO word to the elastic output register slice.
+The arbiter generates a one-hot `grant` vector, which controls the data MUX. The selected data and its channel identifier are then packed together and forwarded to the **elastic output register slice**.
 
-The register slice stores **both the selected data and its one-hot channel identifier**, preserving their association throughout the transfer.
+The output interface provides:
+- `out_data_o` — selected output data.
+- `out_grant_o` — one-hot source identifier (`NUM_CHANNELS` bits).
+- `out_valid_o` — indicates valid output data.
+- `out_ready_i` — indicates downstream readiness.
 
 ### Flow Control and Backpressure
 
-The design uses Ready/Valid handshakes to regulate data movement between stages. A FIFO is read only when it is selected by the arbiter and the output register slice can accept new data:
+Data transfers are controlled through Ready/Valid handshakes. A FIFO advances only when it is selected and the output register slice is ready to accept its data:
 
 ```systemverilog
 assign fifo_rd_ready[ch] = grant[ch] && regslice_in_ready;
 ```
 
-During downstream backpressure, the register slice holds its output data and channel identifier stable until the transfer is accepted.
-
-The output interface consists of `out_data_o`, `out_valid_o`, `out_ready_i`, and `out_grant_o`, where **`out_grant_o` is a `NUM_CHANNELS`-bit one-hot channel identifier**, rather than a binary-encoded index.
+When downstream backpressure occurs, the register slice holds its output data and channel identifier stable until the transfer is accepted. If the register slice is occupied and cannot accept another word, upstream FIFO reads are stalled.
 
 ### Reset Synchronization
 
-A common active-low reset, `global_rst_n`, is distributed through independent reset synchronizers: one for each write-clock domain and one for the shared read-clock domain.
+A common active-low reset (`global_rst_n`) is distributed through **independent reset synchronizers**: one for each write-clock domain and one for the shared read-clock domain.
 
-Reset assertion is asynchronous, while deassertion is synchronized to the corresponding local clock, ensuring controlled reset release across the system.
-
+Each synchronizer supports asynchronous reset assertion and clock-synchronized deassertion, ensuring controlled reset release within its corresponding clock domain.
 
 ## RTL Microarchitecture & CDC
 
