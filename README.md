@@ -24,13 +24,13 @@ The diagram below illustrates the default **four-channel configuration** (`NUM_C
 
 Each input channel receives data through its own Ready/Valid interface and stores it in a dedicated asynchronous FIFO. The FIFOs safely transfer data into the shared `rd_clk` domain, where the round-robin arbiter selects among channels containing valid data.
 
-The arbiter generates a one-hot `grant` vector, which controls the data MUX. The selected data and its channel identifier are then packed together and forwarded to the **elastic output register slice**.
+The arbiter generates a one-hot `grant` vector, which controls the data MUX. The selected data and its channel identifier are then packed together and forwarded to the output register slice.
 
 The output interface provides:
-- `out_data_o` — selected output data.
-- `out_grant_o` — one-hot source identifier (`NUM_CHANNELS` bits).
-- `out_valid_o` — indicates valid output data.
-- `out_ready_i` — indicates downstream readiness.
+- `out_data_o` - selected output data.
+- `out_grant_o` - one-hot source identifier (`NUM_CHANNELS` bits).
+- `out_valid_o` - indicates valid output data.
+- `out_ready_i` - indicates downstream readiness.
 
 ### Flow Control and Backpressure
 
