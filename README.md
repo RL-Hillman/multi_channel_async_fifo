@@ -116,8 +116,6 @@ Verifies the FIFO independently of the arbitration and output logic, focusing on
 
 The three clock configurations use write/read periods of **10/14 ns, 4/34 ns, and 38/4 ns**, covering moderately faster writes, significantly faster writes, and significantly faster reads, respectively.
 
-**Result: PASS - 3/3 clock configurations.**
-
 #### 2. Round-Robin Arbiter - [`rr_arbiter_tb.sv`](tb/rr_arbiter_tb.sv)
 
 Verifies arbitration independently using a reference model that predicts the expected grant and tracks priority updates.
@@ -127,8 +125,6 @@ Verifies arbitration independently using a reference model that predicts the exp
 - **Backpressure handling:** Ensures the selected grant and arbitration priority remain stable while downstream acceptance is stalled.
 - **Fairness and starvation prevention:** Tracks how long continuously requesting channels wait, ensuring they are serviced within the defined round-robin fairness bound.
 - **Dynamic traffic and reset:** Tests changing request patterns, randomized downstream stalls, and priority restoration after reset during a stalled grant.
-
-**Result: PASS - 725 accepted transfers, 72 stalled cycles, and 1,064 fairness checks.**
 
 #### 3. Full System Integration - [`multi_channel_top_tb.sv`](tb/multi_channel_top_tb.sv)
 
@@ -143,8 +139,6 @@ The test uses four independent write clocks and a shared read clock, with a dedi
 - **Sustained throughput:** Confirms that the system delivers one accepted output word per read-clock cycle for 40 consecutive cycles.
 - **Randomized traffic:** Exercises all channels simultaneously with varying source activity and downstream backpressure.
 - **Reset synchronization and recovery:** Verifies reset release across all clock domains, discards buffered transactions during global reset, and checks correct operation after restart.
-
-**Result: PASS - 2,109 accepted writes, 2,076 output transfers, and 497 stalled output cycles.**
 
 ## ASIC Synthesis & Static Timing Analysis
 
