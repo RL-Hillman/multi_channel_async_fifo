@@ -140,33 +140,55 @@ The test uses four independent write clocks and a shared read clock, with a dedi
 - **Randomized traffic:** Exercises all channels simultaneously with varying source activity and downstream backpressure.
 - **Reset synchronization and recovery:** Verifies reset release across all clock domains, discards buffered transactions during global reset, and checks correct operation after restart.
 
+
 ## ASIC Synthesis & Static Timing Analysis
 
-The RTL was synthesized with **Yosys**, mapped to the **Nangate45** standard-cell library, and analyzed using **OpenROAD** pre-layout STA. The reported results correspond to the default configuration: **4 channels, 32-bit data, FIFO depth 16**.
+The RTL was synthesized using **Yosys**, mapped to the **Nangate45** standard-cell library, and evaluated using **OpenROAD** for pre-layout static timing analysis (STA).
 
-### Nangate45 Standard-Cell Utilization
+All results correspond to the default configuration: **4 channels, 32-bit data width, and FIFO depth of 16**.
 
-![Standard-cell utilization](docs/standard_cell_utilization.png)
+### Standard-Cell Synthesis
+
+The synthesized design was mapped to Nangate45 standard cells, providing an estimate of the implementation's logic complexity and cell area.
 
 | Metric | Result |
 |---|---:|
-| Mapped standard cells | **7,543** |
+| Total standard cells | **7,543** |
 | Flip-flops | 2,262 |
 | Multiplexers | 2,546 |
 | Other logic cells | 2,735 |
-| Mapped cell area | **18,077.094 µm²** |
+| **Total mapped cell area** | **18,077.094 µm²** |
 
-### OpenROAD Pre-Layout STA
+<details>
+<summary><strong>View Standard-Cell Utilization Report</strong></summary>
 
-![OpenROAD STA results](docs/sta_results.png)
+![Nangate45 Standard-Cell Utilization](docs/standard_cell_utilization.png)
 
-| Clock scenario | Read clock | Write clocks (CH0 / CH1 / CH2 / CH3) | Setup slack | Hold slack | Recovery | Removal | Status |
+</details>
+
+
+### Static Timing Analysis
+
+Pre-layout STA was performed using **OpenROAD** under three clock configurations, evaluating setup, hold, recovery, and removal timing constraints.
+
+| Scenario | Read Clock | Write Clocks (CH0–CH3) | Setup Slack | Hold Slack | Recovery | Removal | Status |
 |---|---:|---|---:|---:|---:|---:|---|
-| Uniform | 100 MHz | 100 / 100 / 100 / 100 MHz | +3.64 ns | +0.08 ns | +4.50 ns | +4.83 ns | PASS |
-| Slow Writes | 100 MHz | 80 / 70 / 60 / 50 MHz | +3.64 ns | +0.08 ns | +4.50 ns | +4.83 ns | PASS |
-| Mixed | 80 MHz | 100 / 90 / 70 / 60 MHz | +4.21 ns | +0.08 ns | +4.86 ns | +4.89 ns | PASS |
+| Uniform | 100 MHz | 100 / 100 / 100 / 100 MHz | +3.64 ns | +0.08 ns | +4.50 ns | +4.83 ns | **PASS** |
+| Slow Writes | 100 MHz | 80 / 70 / 60 / 50 MHz | +3.64 ns | +0.08 ns | +4.50 ns | +4.83 ns | **PASS** |
+| Mixed | 80 MHz | 100 / 90 / 70 / 60 MHz | +4.21 ns | +0.08 ns | +4.86 ns | +4.89 ns | **PASS** |
 
-The SDC files define independent asynchronous clock groups, so **inter-domain setup/hold timing checks are excluded**. These are **pre-layout estimates**, not placed-and-routed timing closure, physical signoff, or formal CDC signoff.
+**All three scenarios passed**, with positive setup, hold, recovery, and removal slack.
+
+<details>
+<summary><strong>View OpenROAD STA Report</strong></summary>
+
+![OpenROAD STA Results](docs/sta_results.png)
+
+</details>
+
+**Timing methodology:** The SDC constraints define independent asynchronous clock groups, excluding inter-domain setup/hold timing checks. The reported results are **pre-layout estimates**, not post-route timing closure or physical signoff.
+
+
 
 ## How to Run
 
