@@ -8,19 +8,43 @@ Each channel uses an **asynchronous FIFO with Gray-coded pointers and two-stage 
 
 The project demonstrates **RTL architecture, CDC design, reset synchronization, self-checking functional verification, standard-cell synthesis, and pre-layout static timing analysis (STA)**.
 
+
 ## System Architecture
 
-![System architecture](docs/system_architecture.jpeg)
+The system is organized into multiple independent write-clock domains and a single shared read-clock domain. Each input channel operates independently, while the read-domain logic manages channel arbitration, data selection, and output flow control.
 
-Each input channel has its own `wr_clk_i[ch]` and Ready/Valid interface. Data is buffered in that channel's `async_fifo`, then becomes available to the shared `rd_clk` domain. The arbiter evaluates the FIFO valid signals, selects a channel, and drives a one-hot `grant` vector. The data MUX selects that FIFO's word, and `stream_regslice` registers the **data and grant together**.
+The diagram below illustrates the default four-channel configuration (`NUM_CHANNELS = 4`). The architecture scales according to the configured number of channels.
 
-The output interface exposes `out_data_o`, `out_valid_o`, `out_ready_i`, and `out_grant_o`. **`out_grant_o` is a `NUM_CHANNELS`-bit one-hot source identifier**, not a binary-encoded channel index. Only the selected FIFO advances when the output register slice accepts an input word:
+![System Architecture](docs/system_architecture.jpeg)
+
+*Figure 1: Top-level system architecture showing asynchronous FIFOs, round-robin arbitration, data multiplexing, output register slicing, and reset synchronization.*
+
+### Data Flow and Arbitration
+
+Each input channel uses its own `wr_clk_i[ch]` and Ready/Valid interface. Incoming data is buffered in a dedicated asynchronous FIFO, enabling safe transfer into the shared `rd_clk` domain.
+
+The round-robin arbiter monitors the FIFO valid signals and selects an available channel. A one-hot `grant` vector controls the data MUX, which forwards the selected FIFO word to the elastic output register slice.
+
+The register slice stores **both the selected data and its one-hot channel identifier**, preserving their association throughout the transfer.
+
+### Flow Control and Backpressure
+
+The design uses Ready/Valid handshakes to regulate data movement between stages. A FIFO is read only when it is selected by the arbiter and the output register slice can accept new data:
 
 ```systemverilog
-fifo_rd_ready[ch] = grant[ch] && regslice_in_ready;
+assign fifo_rd_ready[ch] = grant[ch] && regslice_in_ready;
 ```
 
-The reset infrastructure includes `NUM_CHANNELS` write-domain `reset_sync` instances plus one read-domain instance. The common active-low reset is asserted asynchronously and released in a clock-synchronized manner for each domain.
+During downstream backpressure, the register slice holds its output data and channel identifier stable until the transfer is accepted.
+
+The output interface consists of `out_data_o`, `out_valid_o`, `out_ready_i`, and `out_grant_o`, where **`out_grant_o` is a `NUM_CHANNELS`-bit one-hot channel identifier**, rather than a binary-encoded index.
+
+### Reset Synchronization
+
+A common active-low reset, `global_rst_n`, is distributed through independent reset synchronizers: one for each write-clock domain and one for the shared read-clock domain.
+
+Reset assertion is asynchronous, while deassertion is synchronized to the corresponding local clock, ensuring controlled reset release across the system.
+
 
 ## RTL Microarchitecture & CDC
 
