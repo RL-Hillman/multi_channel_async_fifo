@@ -100,28 +100,51 @@ This approach prevents a continuously requesting channel from receiving permanen
 
 ## Functional Verification
 
-Three self-checking SystemVerilog testbenches are executed with **Verilator**. The FIFO testbench runs under three different write/read clock configurations, yielding **five successful test runs** in the recorded default test suite.
+The design was verified using three self-checking SystemVerilog testbenches executed with **Verilator**. Verification was performed at both the individual module level and the complete system level, using directed scenarios, deterministic pseudo-random traffic, and reference scoreboards.
 
-| Testbench | Main checks | Result |
-|---|---|---|
-| [`async_fifo_tb.sv`](tb/async_fifo_tb.sv) | EMPTY/FULL, blocked transfers, data ordering, pointer wraparound, concurrent traffic, reset; three clock ratios | **PASS × 3** |
-| [`rr_arbiter_tb.sv`](tb/rr_arbiter_tb.sv) | Round-robin order, one-hot grants, independent reference model, stalls, fairness, randomized requests, reset | **PASS** |
-| [`multi_channel_top_tb.sv`](tb/multi_channel_top_tb.sv) | Four-channel integration, per-channel scoreboards, backpressure, data/channel alignment, isolation, throughput, reset | **PASS** |
+### Testbench Coverage
 
-### Recorded Simulation Results
+#### 1. Asynchronous FIFO — [`async_fifo_tb.sv`](tb/async_fifo_tb.sv)
 
-| Metric | Result |
-|---|---:|
-| FIFO clock configurations passed | 3 / 3 |
-| Arbiter transfers | 725 |
-| Arbiter stalled cycles | 72 |
-| Arbiter fairness checks | 1,064 |
-| Integration accepted writes | 2,109 |
-| Integration output transfers | 2,076 |
-| Integration output stalled cycles | 497 |
-| Sustained output throughput test | 40 consecutive read-clock cycles at one word per cycle |
+Verifies the FIFO independently of the arbitration and output logic, focusing on correct data transfer between unrelated clock domains.
 
-The integration test intentionally exercises a **global reset while data is buffered**, so its aggregate accepted-write and output-transfer counts need not match across reset. The testbenches validate the specified scenarios; they do not claim exhaustive formal verification or measured 100% coverage. The recorded tests use the default top-level channel configuration.
+- **FULL/EMPTY and flow control:** Verifies that reads are blocked when the FIFO is empty and writes are stalled when full. Checks that a blocked write is accepted once space becomes available.
+- **Data integrity and ordering:** Uses a reference scoreboard to ensure every accepted word is read exactly once and in the correct order.
+- **Pointer correctness:** Checks that binary pointers advance only on successful handshakes, Gray-code pointers change by exactly one bit per increment, and both pointers correctly wrap around.
+- **Concurrent asynchronous traffic:** Applies simultaneous writes and reads with randomized backpressure under three clock configurations.
+- **Reset recovery:** Asserts reset while data is buffered, verifies that stale data is discarded, and confirms correct operation after reset release.
+
+The three clock configurations use write/read periods of **10/14 ns, 4/34 ns, and 38/4 ns**, covering moderately faster writes, significantly faster writes, and significantly faster reads, respectively.
+
+**Result: PASS - 3/3 clock configurations.**
+
+#### 2. Round-Robin Arbiter — [`rr_arbiter_tb.sv`](tb/rr_arbiter_tb.sv)
+
+Verifies arbitration independently using a reference model that predicts the expected grant and tracks priority updates.
+
+- **Grant correctness:** Checks idle behavior, individual requests, one-hot grant generation, and selection only among requesting channels.
+- **Priority rotation:** Verifies that grants follow round-robin order and that priority advances only after an accepted transfer.
+- **Backpressure handling:** Ensures the selected grant and arbitration priority remain stable while downstream acceptance is stalled.
+- **Fairness and starvation prevention:** Tracks how long continuously requesting channels wait, ensuring they are serviced within the defined round-robin fairness bound.
+- **Dynamic traffic and reset:** Tests changing request patterns, randomized downstream stalls, and priority restoration after reset during a stalled grant.
+
+**Result: PASS - 725 accepted transfers, 72 stalled cycles, and 1,064 fairness checks.**
+
+#### 3. Full System Integration — [`multi_channel_top_tb.sv`](tb/multi_channel_top_tb.sv)
+
+Verifies the complete data path, including asynchronous FIFOs, arbitration, data multiplexing, reset synchronization, and the output register slice.
+
+The test uses four independent write clocks and a shared read clock, with a dedicated reference scoreboard for each channel.
+
+- **End-to-end data integrity:** Verifies that output data matches the expected word for the granted channel, preserving per-channel ordering and detecting missing, duplicate, or misrouted transactions.
+- **FIFO backpressure:** Fills all input FIFOs while blocking downstream transfers, verifying FULL conditions and correct recovery when output transfers resume.
+- **Output stability:** Ensures `out_valid_o`, `out_data_o`, and `out_grant_o` remain stable throughout downstream stalls.
+- **Channel isolation:** Activates each source independently and verifies that no disabled channel produces output data.
+- **Sustained throughput:** Confirms that the system delivers one accepted output word per read-clock cycle for 40 consecutive cycles.
+- **Randomized traffic:** Exercises all channels simultaneously with varying source activity and downstream backpressure.
+- **Reset synchronization and recovery:** Verifies reset release across all clock domains, discards buffered transactions during global reset, and checks correct operation after restart.
+
+**Result: PASS — 2,109 accepted writes, 2,076 output transfers, and 497 stalled output cycles.**
 
 ## ASIC Synthesis & Static Timing Analysis
 
