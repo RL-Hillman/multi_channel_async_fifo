@@ -104,7 +104,7 @@ The design was verified using three self-checking SystemVerilog testbenches exec
 
 ### Testbench Coverage
 
-#### 1. Asynchronous FIFO — [`async_fifo_tb.sv`](tb/async_fifo_tb.sv)
+#### 1. Asynchronous FIFO - [`async_fifo_tb.sv`](tb/async_fifo_tb.sv)
 
 Verifies the FIFO independently of the arbitration and output logic, focusing on correct data transfer between unrelated clock domains.
 
@@ -118,7 +118,7 @@ The three clock configurations use write/read periods of **10/14 ns, 4/34 ns, an
 
 **Result: PASS - 3/3 clock configurations.**
 
-#### 2. Round-Robin Arbiter — [`rr_arbiter_tb.sv`](tb/rr_arbiter_tb.sv)
+#### 2. Round-Robin Arbiter - [`rr_arbiter_tb.sv`](tb/rr_arbiter_tb.sv)
 
 Verifies arbitration independently using a reference model that predicts the expected grant and tracks priority updates.
 
@@ -130,7 +130,7 @@ Verifies arbitration independently using a reference model that predicts the exp
 
 **Result: PASS - 725 accepted transfers, 72 stalled cycles, and 1,064 fairness checks.**
 
-#### 3. Full System Integration — [`multi_channel_top_tb.sv`](tb/multi_channel_top_tb.sv)
+#### 3. Full System Integration - [`multi_channel_top_tb.sv`](tb/multi_channel_top_tb.sv)
 
 Verifies the complete data path, including asynchronous FIFOs, arbitration, data multiplexing, reset synchronization, and the output register slice.
 
