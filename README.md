@@ -50,7 +50,7 @@ The reset infrastructure includes `NUM_CHANNELS` write-domain `reset_sync` insta
 
 ### Asynchronous FIFO: Clock-Domain Crossing
 
-![Asynchronous FIFO CDC architecture](docs/async_fifo_cdc_architecture.png)
+![Asynchronous FIFO CDC architecture](docs/async_fifo_cdc_architecture.jpeg)
 
 Each FIFO uses separate **binary pointers** for memory addressing and **Gray-coded pointers** for CDC. Only the Gray-coded pointer values are sent across the clock boundary, through two-flop synchronizers marked with `(* async_reg = "true" *)`.
 
