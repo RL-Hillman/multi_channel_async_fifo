@@ -1,7 +1,8 @@
 # Multi-Channel Asynchronous FIFO with Round-Robin Arbitration
 
 
-A parameterized SystemVerilog RTL design that merges multiple independent input clock domains into a single output stream. Each input channel uses an asynchronous FIFO for clock-domain crossing (CDC), while a round-robin arbiter fairly selects the next available channel. An elastic output register slice provides Ready/Valid backpressure support and preserves the selected channel's one-hot identifier alongside its data.
+A parameterized SystemVerilog RTL design that merges multiple independent input clock domains into a single output stream. Each input channel uses an asynchronous FIFO for clock-domain crossing (CDC), while a round-robin arbiter fairly selects the next available channel. 
+An elastic output register slice introduces a registered pipeline stage to improve timing, while providing Ready/Valid backpressure support. It holds the selected data and its one-hot channel identifier stable until the downstream interface accepts the transfer.
 
 The design incorporates **per-clock-domain reset synchronization**, supporting asynchronous active-low reset assertion and synchronous deassertion for reliable reset release across independent clock domains.
 
