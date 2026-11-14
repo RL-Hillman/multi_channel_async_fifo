@@ -1,0 +1,25 @@
+# Verilator build files
+obj_dir*/
+
+# Generated netlists and reports
+netlist/
+reports/
+
+# Simulation waveforms
+*.vcd
+*.fst
+
+# Backup files
+*.bak
+*.save
+*.before_format.sh
+
+# Editor settings
+.vscode/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local helper not included in this release
+/scripts/gen_gray_cdc_sdc.py
