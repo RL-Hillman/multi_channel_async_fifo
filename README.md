@@ -259,3 +259,10 @@ multi_channel_async_fifo/│
 ├── .gitignore
 └── README.md
 ```
+## Project Summary
+
+This project implements a **parameterized multi-clock SystemVerilog RTL architecture**, integrating asynchronous FIFOs, Gray-coded CDC synchronization, round-robin arbitration, and Ready/Valid backpressure for lossless data streaming across independent clock domains.
+
+Functional verification was performed using **Verilator**, with self-checking testbenches, scoreboards, and randomized multi-clock traffic. ASIC synthesis using **Yosys and Nangate45** resulted in **7,543 mapped standard cells**, while **OpenROAD/OpenSTA pre-layout timing analysis** reported positive setup and hold slack across multiple clock-frequency configurations.
+
+The project covers key stages of the **ASIC Front-End design flow**, from RTL development and functional verification to standard-cell synthesis and pre-layout timing analysis.
