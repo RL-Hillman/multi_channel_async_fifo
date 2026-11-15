@@ -228,7 +228,7 @@ The generated gate-level netlist is saved in `netlist/`, while synthesis and tim
 ## Repository Structure
 
 ```text
-multi_channel_async_fifo/│
+multi_channel_async_fifo/
 ├── rtl/                                # Synthesizable RTL
 │   ├── async_fifo.sv                   # Dual-clock FIFO with Gray-code CDC
 │   ├── reset_sync.sv                   # Reset synchronizer
