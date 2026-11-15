@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run from the project root: ~/projects/async_fifo_arbiter
+# Run from the repository root.
 cd "$(dirname "$0")/.."
 mkdir -p obj_dir/async_fifo_tb obj_dir/rr_arbiter_tb obj_dir/multi_channel_top_tb
 
