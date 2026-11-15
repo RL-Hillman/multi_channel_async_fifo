@@ -224,15 +224,39 @@ The generated gate-level netlist is saved in `netlist/`, while synthesis and tim
 
 **Environment setup:** The script uses a local OpenROAD-flow-scripts installation. Tool and library paths may need to be adjusted in [`run_asic_checks.sh`](scripts/run_asic_checks.sh) to match your environment.
 
+
 ## Repository Structure
 
 ```text
-.
-├── rtl/                 # Synthesizable SystemVerilog modules
-├── tb/                  # Self-checking SystemVerilog testbenches
-├── scripts/             # Simulation and ASIC-analysis scripts
-├── constraints/         # Three STA clock scenarios (SDC)
-├── docs/                # Architecture diagrams and result images
+async_fifo_arbiter/
+│
+├── rtl/                                # Synthesizable RTL
+│   ├── async_fifo.sv                   # Dual-clock FIFO with Gray-code CDC
+│   ├── reset_sync.sv                   # Reset synchronizer
+│   ├── rr_arbiter.sv                   # Round-robin arbiter
+│   ├── stream_regslice.sv              # Elastic Ready/Valid register slice
+│   └── multi_channel_top.sv            # Parameterized top-level integration
+│
+├── tb/                                 # Self-checking testbenches
+│   ├── async_fifo_tb.sv
+│   ├── rr_arbiter_tb.sv
+│   └── multi_channel_top_tb.sv
+│
+├── scripts/                            # Automated verification and ASIC flow
+│   ├── run_all_tbs.sh                  # Run functional simulations
+│   └── run_asic_checks.sh              # Run synthesis and pre-layout STA
+│
+├── constraints/                        # Static timing constraints
+│   ├── multi_channel_top.sdc
+│   ├── multi_channel_top_slow_writes.sdc
+│   └── multi_channel_top_mixed.sdc
+│
+├── docs/                               # Diagrams and implementation results
+│   ├── system_architecture.jpeg
+│   ├── async_fifo_cdc_architecture.jpeg
+│   ├── standard_cell_utilization.png
+│   └── sta_results.png
+│
 ├── .gitignore
 └── README.md
 ```
